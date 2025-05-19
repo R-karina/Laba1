@@ -1,68 +1,101 @@
-import java.util.Scanner;
+// Основной класс для взаимодействия с пользователем
+import java.util.*;
 
 public class Main {
-    private static final Scanner scanner = new Scanner(System.in);
-    private static final Assortment assortment = new Assortment();
+    private static ShoppingFacade facade = new ShoppingFacade(); //для оаботы  с каталогом и корзиной.
+    private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        // Инициализация начального каталога
-        assortment.addProduct(new FoodProduct("Яблоки", 1.99, 0.5));
-        assortment.addProduct(new ElectronicsProduct("Наушники", 49.99, 0.2));
+        while (true) {
+            System.out.println("Выберите режим: 1 - Администратор, 2 - Покупатель, 0 - Выход");
+            int mode = scanner.nextInt();
+            scanner.nextLine(); // Потребление новой строки
 
-        while(true) {
-            System.out.println("\nМеню:");
-            System.out.println("1. Просмотреть каталог");
-            System.out.println("2. Добавить товар в каталог");
-            System.out.println("3. Сформировать заказ");
-            System.out.println("4. Выход");
-            System.out.print("Выберите действие: ");
-
-            int choice = getIntInput(1, 4);
-
-            if (choice == 1) {
-                assortment.displayCatalog();
-            } else if (choice == 2) {
-                assortment.addProduct(ProductFactory.createProduct());
-            } else if (choice == 3) {
-                createOrder();
-            } else if (choice == 4) {
-                System.out.println("До свидания!");
-                return;
+            if (mode == 0) {
+                break;
+            } else if (mode == 1) {
+                adminMode();
+            } else if (mode == 2) {
+                customerMode();
+            } else {
+                System.out.println("Неверный режим. Пожалуйста, попробуйте снова.");
             }
         }
     }
 
-    private static void createOrder() {
-        Cart cart = new Cart();
-
+    private static void adminMode() {
         while (true) {
-            assortment.displayCatalog();
-            System.out.print("\nВыберите товар (0 - завершить): ");
-            int choice = getIntInput(0, assortment.size());
+            System.out.println("Режим администратора: 1 - Добавить продукт, 2 - Добавить гарантию, 3 - Показать каталог, 0 - Назад");
+            int option = scanner.nextInt();
+            scanner.nextLine(); // Потребление новой строки
 
-            if (choice == 0) break;
+            if (option == 0) {
+                break;
+            } else if (option == 1) {
+                System.out.println("Введите тип продукта (1 для еды, 2 для электроники):");
+                int type = scanner.nextInt();
+                scanner.nextLine(); // Потребление новой строки
+                System.out.println("Введите название продукта:");
+                String name = scanner.nextLine();
+                System.out.println("Введите цену продукта:");
+                double price = scanner.nextDouble();
+                System.out.println("Введите вес продукта:");
+                double weight = scanner.nextDouble();
 
-            Product product = assortment.getProduct(choice - 1);
-            cart.addItem(product);
-            System.out.println("Добавлен: " + product.getName());
-        }
-
-        cart.displayContents();
-    }
-
-    private static int getIntInput(int min, int max) {
-        while (true) {
-            String input = scanner.nextLine();
-            try {
-                int num = Integer.parseInt(input);
-                if (num >= min && num <= max) {
-                    return num;
+                Product product;
+                if (type == 1) {
+                    product = new Food(name, price, weight);
                 } else {
-                    System.out.println("Число должно быть от " + min + " до " + max);
+                    product = new Electronics(name, price, weight);
                 }
-            } catch (NumberFormatException e) {
-                System.out.println("Введите целое число");
+                facade.addProductToCatalog(product);
+            } else if (option == 2) {
+                System.out.println("Введите название продукта, чтобы добавить гарантию:");
+                String productName = scanner.nextLine();
+                System.out.println("Введите детали гарантии:");
+                String warranty = scanner.nextLine();
+                facade.addWarrantyToProduct(productName, warranty);
+            } else if (option == 3) {
+                facade.displayCatalog();
+            } else {
+                System.out.println("Неверный вариант. Пожалуйста, попробуйте снова.");
             }
         }
     }
+
+    private static void customerMode() {
+        while (true) {
+            System.out.println("Режим покупателя: 1 - Добавить продукт в корзину, 2 - Удалить продукт из корзины, 3 - Показать каталог, 4 - Просмотреть корзину, 0 - Назад");
+            int option = scanner.nextInt();
+            scanner.nextLine(); // Потребление новой строки
+
+            if (option == 0) {
+                break;
+            } else if (option == 1) {
+                while (true) {
+                    System.out.println("Введите название продукта, чтобы добавить в корзину (или введите 0 для выхода):");
+                    String productName = scanner.nextLine();
+                    if (productName.equals("0")) {
+                        break; // Выход из внутреннего цикла
+                    }
+                    facade.addProductToCart(productName);
+                }
+                // Вывод итоговой суммы и веса после добавления товаров
+                facade.calculateCartTotal();
+            } else if (option == 2) {
+                System.out.println("Введите название продукта, чтобы удалить из корзины:");
+                String productName = scanner.nextLine();
+                facade.removeProductFromCart(productName);
+            } else if (option == 3) {
+                facade.displayCatalog();
+            } else if (option == 4) {
+                // Просмотр содержимого корзины
+                System.out.println("Содержимое корзины:");
+                facade.getCart().displayCartContents(); // Добавляем вывод содержимого корзины
+            } else {
+                System.out.println("Неверный вариант. Пожалуйста, попробуйте снова.");
+            }
+        }
+    }
+
 }
